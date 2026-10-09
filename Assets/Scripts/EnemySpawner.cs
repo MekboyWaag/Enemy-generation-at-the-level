@@ -5,9 +5,8 @@ using UnityEngine.Pool;
 public class EnemySpawner : MonoBehaviour
 {
     [Header("Dependencies")]
-    [SerializeField] private Enemy _prefab;
-    [SerializeField, Tooltip("Точки, из которых могут появляться враги. Направление задается осью Z точки.")]
-    private Transform[] _spawnPoints;
+    [SerializeField, Tooltip("Точки спавна со скриптом SpawnPoint.")]
+    private SpawnPoint[] _spawnPoints;
 
     private EnemySpawnerConfig _config;
     private EnemyConfig _elementConfig;
@@ -22,6 +21,7 @@ public class EnemySpawner : MonoBehaviour
         StopSpawning();
 
         _isInitialized = false;
+
         _pool?.Dispose();
     }
 
@@ -32,29 +32,20 @@ public class EnemySpawner : MonoBehaviour
             return;
         }
 
-        if (_prefab == null || _spawnPoints == null || _spawnPoints.Length == 0)
+        _config = config;
+        _elementConfig = elementConfig;
+
+        if (_config.EnemyPrefab == null || _spawnPoints == null || _spawnPoints.Length == 0)
         {
             Debug.LogError("[EnemySpawner] Dependencies or Spawn Points missing!", this);
             return;
         }
 
-        for (int i = 0; i < _spawnPoints.Length; i++)
-        {
-            if (_spawnPoints[i] == null)
-            {
-                Debug.LogError($"[EnemySpawner] Spawn point at index {i} is NULL! Fix in Inspector.", this);
-                return;
-            }
-        }
-
-        _config = config;
-        _elementConfig = elementConfig;
-
         _spawnDelay = new WaitForSeconds(_config.SpawnInterval);
 
         _pool = new ObjectPool<Enemy>(
             createFunc: CreateElement,
-            actionOnGet: null,
+            actionOnGet: element => element.gameObject.SetActive(true),
             actionOnRelease: element => element.gameObject.SetActive(false),
             actionOnDestroy: DestroyElement,
             collectionCheck: false,
@@ -107,7 +98,7 @@ public class EnemySpawner : MonoBehaviour
 
     private IEnumerator SpawnRoutine()
     {
-        while (true)
+        while (isActiveAndEnabled)
         {
             yield return _spawnDelay;
             Spawn();
@@ -117,23 +108,22 @@ public class EnemySpawner : MonoBehaviour
     private void Spawn()
     {
         Enemy element = _pool.Get();
-        Transform spawnPoint = GetRandomSpawnPoint();
+        SpawnPoint spawnPoint = GetRandomSpawnPoint();
 
-        element.Initialize(spawnPoint.position, spawnPoint.forward, _elementConfig);
-        element.gameObject.SetActive(true);
+        element.Initialize(spawnPoint.Position, spawnPoint.Direction, _elementConfig);
     }
 
     private Enemy CreateElement()
     {
-        Enemy element = Instantiate(_prefab, transform);
+        Enemy element = Instantiate(_config.EnemyPrefab, transform);
 
         element.gameObject.SetActive(false);
-        element.OnLifetimeEnded += ReturnToPool;
+        element.LifetimeEnded += OnEnemyLifetimeEnded;
 
         return element;
     }
 
-    private void ReturnToPool(Enemy element)
+    private void OnEnemyLifetimeEnded(Enemy element)
     {
         if (!_isInitialized)
         {
@@ -148,12 +138,12 @@ public class EnemySpawner : MonoBehaviour
     {
         if (element != null)
         {
-            element.OnLifetimeEnded -= ReturnToPool;
+            element.LifetimeEnded -= OnEnemyLifetimeEnded;
             Destroy(element.gameObject);
         }
     }
 
-    private Transform GetRandomSpawnPoint()
+    private SpawnPoint GetRandomSpawnPoint()
     {
         int randomIndex = Random.Range(0, _spawnPoints.Length);
         return _spawnPoints[randomIndex];

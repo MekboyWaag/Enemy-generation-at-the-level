@@ -9,7 +9,7 @@ public class EnemyCoordinator : MonoBehaviour
     [Header("Systems")]
     [SerializeField] private EnemySpawner _spawner;
 
-    private void Awake()
+    private void Start()
     {
         if (_spawnerConfig == null || _enemyConfig == null || _spawner == null)
         {

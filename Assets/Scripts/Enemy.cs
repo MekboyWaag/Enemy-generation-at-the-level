@@ -1,23 +1,23 @@
 using System;
+using System.Collections;
 using UnityEngine;
 
 public class Enemy : MonoBehaviour
 {
     private EnemyConfig _config;
     private Vector3 _moveDirection;
-
     private bool _isReleased;
-    private float _lifetimeTimer;
 
-    public event Action<Enemy> OnLifetimeEnded;
+    private WaitForSeconds _lifetimeDelay;
+    private Coroutine _lifetimeRoutine;
+
+    public event Action<Enemy> LifetimeEnded;
 
     public void Initialize(Vector3 position, Vector3 direction, EnemyConfig config)
     {
         _config = config;
         _moveDirection = direction.normalized;
-
         _isReleased = false;
-        _lifetimeTimer = 0f;
 
         transform.position = position;
 
@@ -25,6 +25,14 @@ public class Enemy : MonoBehaviour
         {
             transform.rotation = Quaternion.LookRotation(_moveDirection);
         }
+
+        if (_lifetimeDelay == null)
+        {
+            _lifetimeDelay = new WaitForSeconds(_config.MaxLifetime);
+        }
+
+        if (_lifetimeRoutine != null) StopCoroutine(_lifetimeRoutine);
+        _lifetimeRoutine = StartCoroutine(LifetimeRoutine());
     }
 
     private void Update()
@@ -35,7 +43,6 @@ public class Enemy : MonoBehaviour
         }
 
         HandleMovement();
-        HandleLifetime();
     }
 
     private void HandleMovement()
@@ -43,19 +50,10 @@ public class Enemy : MonoBehaviour
         transform.position += _moveDirection * (_config.MoveSpeed * Time.deltaTime);
     }
 
-    private void HandleLifetime()
+    private IEnumerator LifetimeRoutine()
     {
-        _lifetimeTimer += Time.deltaTime;
-
-        if (_lifetimeTimer >= _config.MaxLifetime)
-        {
-            Release();
-        }
-    }
-
-    private void OnDestroy()
-    {
-        OnLifetimeEnded = null;
+        yield return _lifetimeDelay;
+        Release();
     }
 
     private void Release()
@@ -65,7 +63,12 @@ public class Enemy : MonoBehaviour
             return;
         }
 
-        _isReleased = true;
-        OnLifetimeEnded?.Invoke(this);
+        if (_lifetimeRoutine != null)
+        {
+            StopCoroutine(_lifetimeRoutine);
+            _lifetimeRoutine = null;
+        }
+
+        LifetimeEnded?.Invoke(this);
     }
 }
