@@ -2,21 +2,29 @@ using UnityEngine;
 
 public class EnemyCoordinator : MonoBehaviour
 {
-    [Header("Configs")]
-    [SerializeField] private EnemySpawnerConfig _spawnerConfig;
-    [SerializeField] private EnemyConfig _enemyConfig;
-
     [Header("Systems")]
-    [SerializeField] private EnemySpawner _spawner;
+    [SerializeField, Tooltip("Массив всех автономных спавнеров на сцене")]
+    private LocalSpawner[] _spawners;
 
     private void Start()
     {
-        if (_spawnerConfig == null || _enemyConfig == null || _spawner == null)
+        if (_spawners == null || _spawners.Length == 0)
         {
-            Debug.LogError("[EnemyCoordinator] Dependencies missing! Initialization aborted.", this);
+            Debug.LogWarning($"[{nameof(EnemyCoordinator)}] {name}: Локальные спавнеры не назначены.", this);
             return;
         }
 
-        _spawner.Initialize(_spawnerConfig, _enemyConfig);
+        for (int i = 0; i < _spawners.Length; i++)
+        {
+            LocalSpawner spawner = _spawners[i];
+
+            if (spawner == null)
+            {
+                Debug.LogWarning($"[{nameof(EnemyCoordinator)}] {name}: Слот спавнера с индексом {i} пуст (Null)! Пропускаем.", this);
+                continue;
+            }
+
+            spawner.Initialize();
+        }
     }
 }

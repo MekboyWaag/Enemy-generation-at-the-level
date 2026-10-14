@@ -1,23 +1,18 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "EnemySpawnerConfig", menuName = "Systems/Enemy Spawner Config")]
-public class EnemySpawnerConfig : ScriptableObject
+[CreateAssetMenu(fileName = "LocalSpawnerConfig", menuName = "Systems/Local Spawner Config")]
+public class LocalSpawnerConfig : ScriptableObject
 {
     private const int DefaultSafetyBufferMultiplier = 2;
 
-    [Header("Dependencies")]
-    [SerializeField, Tooltip("Префаб врага")]
-    private Enemy _enemyPrefab;
-
     [Header("Pool Settings")]
-    [SerializeField, Min(5)] private int _initialPoolCapacity = 30;
+    [SerializeField, Min(1)] private int _initialPoolCapacity = 15;
 
     [SerializeField, Tooltip("Жесткий лимит памяти.")]
-    [Min(5)] private int _maxPoolCapacity = 60;
+    [Min(1)] private int _maxPoolCapacity = 30;
 
     [SerializeField, Min(0.1f)] private float _spawnInterval = 2f;
 
-    public Enemy EnemyPrefab => _enemyPrefab;
     public int InitialPoolCapacity => _initialPoolCapacity;
     public int MaxPoolCapacity => _maxPoolCapacity;
     public float SpawnInterval => _spawnInterval;
@@ -29,7 +24,9 @@ public class EnemySpawnerConfig : ScriptableObject
         {
             _maxPoolCapacity = _initialPoolCapacity * DefaultSafetyBufferMultiplier;
 
-            Debug.LogWarning($"[EnemySpawnerConfig] MaxPoolCapacity не может быть меньше Initial. Установлен безопасный буфер (x{DefaultSafetyBufferMultiplier}).");
+            Debug.LogWarning(
+                $"[{nameof(LocalSpawnerConfig)}] {name}: MaxPoolCapacity не может быть меньше InitialPoolCapacity. Установлен безопасный буфер (x{DefaultSafetyBufferMultiplier}).",
+                this);
         }
     }
 #endif

@@ -10,10 +10,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0f0b34bade1b2104397b12edad82c248, type: 3}
-  m_Name: Data_Spawner
+  m_Name: DefaultSpawnerConfig
   m_EditorClassIdentifier: 
-  _enemyPrefab: {fileID: 3190975087966286408, guid: a597b524c4125d04fb357d7225240c55,
-    type: 3}
-  _initialPoolCapacity: 30
-  _maxPoolCapacity: 60
-  _spawnInterval: 2
+  _initialPoolCapacity: 10
+  _maxPoolCapacity: 20
+  _spawnInterval: 1.5

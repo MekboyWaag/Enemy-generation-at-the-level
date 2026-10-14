@@ -1,59 +1,73 @@
 using System;
-using System.Collections;
 using UnityEngine;
 
 public class Enemy : MonoBehaviour
 {
+    private const float MinRotationDistanceSquared = 0.001f;
     private EnemyConfig _config;
-    private Vector3 _moveDirection;
-    private bool _isReleased;
+    private ITarget _target;
 
-    private WaitForSeconds _lifetimeDelay;
-    private Coroutine _lifetimeRoutine;
+    private float _remainingLifetime;
+    private bool _isReleased;
 
     public event Action<Enemy> LifetimeEnded;
 
-    public void Initialize(Vector3 position, Vector3 direction, EnemyConfig config)
+    public void Initialize(Vector3 spawnPosition, ITarget target, EnemyConfig config)
     {
         _config = config;
-        _moveDirection = direction.normalized;
+        _target = target;
+        _remainingLifetime = _config.MaxLifetime;
         _isReleased = false;
 
-        transform.position = position;
+        transform.position = spawnPosition;
 
-        if (_moveDirection != Vector3.zero)
+        if (_target != null)
         {
-            transform.rotation = Quaternion.LookRotation(_moveDirection);
+            UpdateRotation(_target.Position);
         }
-
-        if (_lifetimeDelay == null)
-        {
-            _lifetimeDelay = new WaitForSeconds(_config.MaxLifetime);
-        }
-
-        if (_lifetimeRoutine != null) StopCoroutine(_lifetimeRoutine);
-        _lifetimeRoutine = StartCoroutine(LifetimeRoutine());
     }
 
     private void Update()
     {
-        if (_isReleased || _config == null)
+        if (_isReleased || _config == null || _target == null)
         {
             return;
         }
 
+        UpdateLifetime();
         HandleMovement();
+    }
+
+    private void UpdateLifetime()
+    {
+        _remainingLifetime -= Time.deltaTime;
+
+        if (_remainingLifetime <= 0f)
+        {
+            Release();
+        }
     }
 
     private void HandleMovement()
     {
-        transform.position += _moveDirection * (_config.MoveSpeed * Time.deltaTime);
+        Vector3 targetPosition = _target.Position;
+
+        UpdateRotation(targetPosition);
+
+        transform.position = Vector3.MoveTowards(
+            transform.position,
+            targetPosition,
+            _config.MoveSpeed * Time.deltaTime);
     }
 
-    private IEnumerator LifetimeRoutine()
+    private void UpdateRotation(Vector3 targetPosition)
     {
-        yield return _lifetimeDelay;
-        Release();
+        Vector3 offset = targetPosition - transform.position;
+
+        if (Vector3.SqrMagnitude(offset) > MinRotationDistanceSquared)
+        {
+            transform.rotation = Quaternion.LookRotation(offset.normalized);
+        }
     }
 
     private void Release()
@@ -63,12 +77,12 @@ public class Enemy : MonoBehaviour
             return;
         }
 
-        if (_lifetimeRoutine != null)
-        {
-            StopCoroutine(_lifetimeRoutine);
-            _lifetimeRoutine = null;
-        }
-
+        _isReleased = true;
         LifetimeEnded?.Invoke(this);
+    }
+
+    private void OnDestroy()
+    {
+        LifetimeEnded = null;
     }
 }

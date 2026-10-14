@@ -10,7 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ce11e61dba4b5474fad896d9fa4057e1, type: 3}
-  m_Name: Data_Enemy
+  m_Name: BlueEnemyConfig
   m_EditorClassIdentifier: 
-  _moveSpeed: 5
+  _enemyPrefab: {fileID: 6490355445923277659, guid: ad2c1936ef533f342840926bda744b77,
+    type: 3}
+  _moveSpeed: 4
   _maxLifetime: 10

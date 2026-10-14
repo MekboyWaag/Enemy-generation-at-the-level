@@ -5,6 +5,10 @@ public class EnemyConfig : ScriptableObject
 {
     private const float SpeedWarningThreshold = 100f;
 
+    [Header("Identity")]
+    [SerializeField, Tooltip("Префаб конкретного типа врага")]
+    private Enemy _enemyPrefab;
+
     [Header("Movement Settings")]
     [SerializeField, Min(0.1f)] private float _moveSpeed = 5f;
 
@@ -12,6 +16,7 @@ public class EnemyConfig : ScriptableObject
     [SerializeField, Tooltip("Время жизни для защиты от утечек (секунды)")]
     [Min(1f)] private float _maxLifetime = 10f;
 
+    public Enemy EnemyPrefab => _enemyPrefab;
     public float MoveSpeed => _moveSpeed;
     public float MaxLifetime => _maxLifetime;
 
@@ -20,7 +25,12 @@ public class EnemyConfig : ScriptableObject
     {
         if (_moveSpeed > SpeedWarningThreshold)
         {
-            Debug.LogWarning($"[EnemyConfig] Скорость превышает рекомендованный лимит ({SpeedWarningThreshold})!");
+            Debug.LogWarning($"[{nameof(EnemyConfig)}] {name}: Скорость превышает рекомендованный лимит ({SpeedWarningThreshold})!", this);
+        }
+
+        if (_enemyPrefab == null)
+        {
+            Debug.LogWarning($"[{nameof(EnemyConfig)}] {name}: Не забудьте назначить префаб врага!", this);
         }
     }
 #endif
